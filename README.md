@@ -8,4 +8,7 @@ This app was originally written by /u/FlyingLaserTurtle, with contributions from
 
 ## Change History
 
-Coming soon in the next version: The ability to set defaults for the Comment Mop form.
+Coming soon in the next version: 
+
+* Fix error that causes Comment Mop to fail consistently for certain users
+* The ability to set defaults for the Comment Mop form.

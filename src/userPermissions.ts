@@ -17,10 +17,15 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
         return JSON.parse(cachedValue) as boolean;
     }
 
-    const currentUser = await context.reddit.getCurrentUser();
+    const moderators = await context.reddit.getModerators({
+        subredditName: context.subredditName ?? await context.reddit.getCurrentSubredditName(),
+        username: await context.reddit.getCurrentUsername(),
+    }).all();
+
+    const currentUser = moderators.find(moderator => moderator.id === context.userId);
     if (!currentUser) {
-        console.error("No current user found");
-        return;
+        console.error("Current user is not a moderator");
+        return false;
     }
 
     const modPermissions = await currentUser.getModPermissionsForSubreddit(context.subredditName ?? await context.reddit.getCurrentSubredditName());
