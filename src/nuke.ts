@@ -1,20 +1,20 @@
 import { Comment, Devvit, Post } from "@devvit/public-api";
 
-export type NukeProps = {
+export interface NukeProps {
     remove: boolean;
     lock: boolean;
     skipDistinguished: boolean; // When true, distinguished comments and their children are not processed
     commentId: string;
     subredditId: string;
-};
+}
 
-export type NukePostProps = {
+export interface NukePostProps {
     remove: boolean;
     lock: boolean;
     skipDistinguished: boolean; // When true, distinguished comments and their children are not processed
     postId: string;
     subredditId: string;
-};
+}
 
 // Depth-first traversal to get all comments in a thread
 async function* getAllCommentsInThread (
@@ -44,7 +44,7 @@ async function* getAllCommentsInPost (
 
 export async function handleNukePost (props: NukePostProps, context: Devvit.Context) {
     const startTime = Date.now();
-    let success = true;
+    let success: boolean;
     let message: string;
 
     const shouldLock = props.lock;
@@ -64,16 +64,10 @@ export async function handleNukePost (props: NukePostProps, context: Devvit.Cont
         const modPermissions = await user.getModPermissionsForSubreddit(post.subredditName);
         const canManagePosts = modPermissions.includes("all") || modPermissions.includes("posts");
 
-        console.log(
-            `Mod Info: r/${post.subredditName} u/${user.username} permissions:${modPermissions}: ${
-                canManagePosts ? "Can mod" : "Cannot mod"
-            }`,
-        );
+        console.log(`Mod Info: r/${post.subredditName} u/${user.username} permissions:${modPermissions}: ${canManagePosts ? "Can mod" : "Cannot mod"}`);
 
         if (!canManagePosts) {
-            console.info(
-                "A user without the correct mod permissions tried to nuke all comments of a post.",
-            );
+            console.info("A user without the correct mod permissions tried to nuke all comments of a post.");
             return {
                 message: "You do not have the correct mod permissions to do this.",
                 success: false,
@@ -93,8 +87,12 @@ export async function handleNukePost (props: NukePostProps, context: Devvit.Cont
             await Promise.all(comments.map(comment => comment.removed || comment.remove()));
         }
 
-        const verbage =
-      shouldLock && shouldRemove ? "removed and locked" : shouldLock ? "locked" : "removed";
+        let verbage: string;
+        if (shouldLock && shouldRemove) {
+            verbage = "removed and locked";
+        } else {
+            verbage = shouldLock ? "locked" : "removed";
+        }
 
         if (shouldRemove) {
             try {
@@ -125,7 +123,7 @@ export async function handleNukePost (props: NukePostProps, context: Devvit.Cont
 
 export async function handleNuke (props: NukeProps, context: Devvit.Context) {
     const startTime = Date.now();
-    let success = true;
+    let success: boolean;
     let message: string;
 
     const shouldLock = props.lock;
@@ -143,11 +141,7 @@ export async function handleNuke (props: NukeProps, context: Devvit.Context) {
         const modPermissions = await user.getModPermissionsForSubreddit(comment.subredditName);
         const canManagePosts = modPermissions.includes("all") || modPermissions.includes("posts");
 
-        console.log(
-            `Mod Info: r/${comment.subredditName} u/${user.username} permissions:${modPermissions}: ${
-                canManagePosts ? "Can mod" : "Cannot mod"
-            }`,
-        );
+        console.log(`Mod Info: r/${comment.subredditName} u/${user.username} permissions:${modPermissions}: ${canManagePosts ? "Can mod" : "Cannot mod"}`);
 
         if (!canManagePosts) {
             console.info("A user without the correct mod permissions tried to comment mop.");
@@ -170,8 +164,12 @@ export async function handleNuke (props: NukeProps, context: Devvit.Context) {
             await Promise.all(comments.map(comment => comment.removed || comment.remove()));
         }
 
-        const verbage =
-      shouldLock && shouldRemove ? "removed and locked" : shouldLock ? "locked" : "removed";
+        let verbage: string;
+        if (shouldLock && shouldRemove) {
+            verbage = "removed and locked";
+        } else {
+            verbage = shouldLock ? "locked" : "removed";
+        }
 
         if (shouldRemove) {
             try {

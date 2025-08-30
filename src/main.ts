@@ -29,14 +29,12 @@ const nukeFields: FormField[] = [
 ] as const;
 
 const nukeForm = Devvit.createForm(
-    () => {
-        return {
-            fields: nukeFields,
-            title: "Mop Comments",
-            acceptLabel: "Mop",
-            cancelLabel: "Cancel",
-        };
-    },
+    () => ({
+        fields: nukeFields,
+        title: "Mop Comments",
+        acceptLabel: "Mop",
+        cancelLabel: "Cancel",
+    }),
     async ({ values }, context) => {
         if (!values.lock && !values.remove) {
             context.ui.showToast("You must select either lock or remove.");
@@ -46,9 +44,9 @@ const nukeForm = Devvit.createForm(
         if (context.commentId) {
             const result = await handleNuke(
                 {
-                    remove: values.remove,
-                    lock: values.lock,
-                    skipDistinguished: values.skipDistinguished,
+                    remove: values.remove as boolean,
+                    lock: values.lock as boolean,
+                    skipDistinguished: values.skipDistinguished as boolean,
                     commentId: context.commentId,
                     subredditId: context.subredditId,
                 },
@@ -73,14 +71,12 @@ Devvit.addMenuItem({
 });
 
 const nukePostForm = Devvit.createForm(
-    () => {
-        return {
-            fields: nukeFields,
-            title: "Mop Post Comments",
-            acceptLabel: "Mop",
-            cancelLabel: "Cancel",
-        };
-    },
+    () => ({
+        fields: nukeFields,
+        title: "Mop Post Comments",
+        acceptLabel: "Mop",
+        cancelLabel: "Cancel",
+    }),
     async ({ values }, context) => {
         if (!values.lock && !values.remove) {
             context.ui.showToast("You must select either lock or remove.");
@@ -93,9 +89,9 @@ const nukePostForm = Devvit.createForm(
 
         const result = await handleNukePost(
             {
-                remove: values.remove,
-                lock: values.lock,
-                skipDistinguished: values.skipDistinguished,
+                remove: values.remove as boolean,
+                lock: values.lock as boolean,
+                skipDistinguished: values.skipDistinguished as boolean,
                 postId: context.postId,
                 subredditId: context.subredditId,
             },
