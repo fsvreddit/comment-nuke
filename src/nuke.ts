@@ -161,7 +161,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
-        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} removed on ${nukeProps.target.id}.`);
+        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id}.`);
 
         if (nukeProps.remove) {
             try {
