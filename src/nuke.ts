@@ -145,6 +145,11 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             }
         }
 
+        if (comments.length === 0) {
+            context.ui.showToast("No comments found to mop.");
+            return;
+        }
+
         const nukeResult = await nukeComments(comments, nukeProps.lock, nukeProps.remove);
         if (!nukeResult) {
             context.ui.showToast("Mop failed! Please try again later.");
