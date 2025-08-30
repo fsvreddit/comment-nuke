@@ -1,5 +1,7 @@
-A moderation tool used for deleting and locking an entire comment tree, starting with a single comment. This app demonstrates how to:
+A moderation tool used for deleting and locking an entire comment tree, starting with a single comment, or at an entire post level.
 
-- Use the Reddit API to perform large-scale operations.
+## Credits
 
-- Use menu actions as an entrypoint for apps.
+This app was originally written by /u/FlyingLaserTurtle, with contributions from /u/ni5arga.
+
+## Change History
