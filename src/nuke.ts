@@ -1,19 +1,43 @@
-import { Comment, Devvit, Post } from "@devvit/public-api";
+import { Comment, Context, FormFunction, FormOnSubmitEvent, JSONObject, Post } from "@devvit/public-api";
+import pluralize from "pluralize";
+
+export enum NukeFormField {
+    Remove = "remove",
+    Lock = "lock",
+    SkipDistinguished = "skipDistinguished",
+}
+
+export const nukeFormDefinition: FormFunction = data => ({
+    title: data.title as string,
+    fields: [
+        {
+            name: NukeFormField.Remove,
+            label: "Remove Comments",
+            type: "boolean",
+            defaultValue: data.remove as boolean,
+        },
+        {
+            name: NukeFormField.Lock,
+            label: "Lock Comments",
+            type: "boolean",
+            defaultValue: data.lock as boolean,
+        },
+        {
+            name: NukeFormField.SkipDistinguished,
+            label: "Skip Distinguished Comments",
+            type: "boolean",
+            defaultValue: data.skipDistinguished as boolean,
+        },
+    ],
+    acceptLabel: "Mop",
+    cancelLabel: "Cancel",
+});
 
 export interface NukeProps {
     remove: boolean;
     lock: boolean;
     skipDistinguished: boolean; // When true, distinguished comments and their children are not processed
-    commentId: string;
-    subredditId: string;
-}
-
-export interface NukePostProps {
-    remove: boolean;
-    lock: boolean;
-    skipDistinguished: boolean; // When true, distinguished comments and their children are not processed
-    postId: string;
-    subredditId: string;
+    target: Post | Comment;
 }
 
 // Depth-first traversal to get all comments in a thread
@@ -42,161 +66,118 @@ async function* getAllCommentsInPost (
     }
 }
 
-export async function handleNukePost (props: NukePostProps, context: Devvit.Context) {
-    const startTime = Date.now();
-    let success: boolean;
-    let message: string;
-
-    const shouldLock = props.lock;
-    const shouldRemove = props.remove;
-    const skipDistinguished = props.skipDistinguished;
-
+async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean): Promise<boolean> {
     try {
-        const [user, post] = await Promise.all([
-            context.reddit.getCurrentUser(),
-            context.reddit.getPostById(props.postId),
-        ]);
+        const promises: Promise<void>[] = [];
 
-        if (!user) {
-            return { success: false, message: "Can't get user" };
-        }
-
-        const modPermissions = await user.getModPermissionsForSubreddit(post.subredditName);
-        const canManagePosts = modPermissions.includes("all") || modPermissions.includes("posts");
-
-        console.log(`Mod Info: r/${post.subredditName} u/${user.username} permissions:${modPermissions}: ${canManagePosts ? "Can mod" : "Cannot mod"}`);
-
-        if (!canManagePosts) {
-            console.info("A user without the correct mod permissions tried to nuke all comments of a post.");
-            return {
-                message: "You do not have the correct mod permissions to do this.",
-                success: false,
-            };
-        }
-
-        const comments: Comment[] = [];
-        for await (const eachComment of getAllCommentsInPost(post, skipDistinguished)) {
-            comments.push(eachComment);
+        if (shouldRemove) {
+            promises.push(...comments.map(comment => comment.remove()));
         }
 
         if (shouldLock) {
-            await Promise.all(comments.map(comment => comment.locked || comment.lock()));
+            promises.push(...comments.map(comment => comment.lock()));
         }
 
-        if (shouldRemove) {
-            await Promise.all(comments.map(comment => comment.removed || comment.remove()));
-        }
-
-        let verbage: string;
-        if (shouldLock && shouldRemove) {
-            verbage = "removed and locked";
-        } else {
-            verbage = shouldLock ? "locked" : "removed";
-        }
-
-        if (shouldRemove) {
-            try {
-                await context.modLog.add({
-                    action: "removecomment",
-                    target: props.postId,
-                    details: "comment-mop app",
-                    description: `u/${user.username} used comment-mop to ${verbage} all comments of this post.`,
-                });
-            } catch (e: unknown) {
-                console.error(`Failed to add modlog for post: ${props.postId}.`, (e as Error).message);
-            }
-        }
-
-        success = true;
-        message = `Comments ${verbage}! Refresh the page to see the cleanup.`;
-        const finishTime = Date.now();
-        const timeElapsed = (finishTime - startTime) / 1000;
-        console.info(`${comments.length} comment(s) handled in ${timeElapsed} seconds.`);
-    } catch (err: unknown) {
-        success = false;
-        message = "Mop failed! Please try again later.";
-        console.error(err);
+        await Promise.all(promises);
+        return true;
+    } catch (error) {
+        console.error("Failed to nuke comments:", error);
+        return false;
     }
-
-    return { success, message };
 }
 
-export async function handleNuke (props: NukeProps, context: Devvit.Context) {
-    const startTime = Date.now();
-    let success: boolean;
-    let message: string;
+export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, context: Context) {
+    const { values } = event;
 
-    const shouldLock = props.lock;
-    const shouldRemove = props.remove;
-    const skipDistinguished = props.skipDistinguished;
+    if (!context.postId) {
+        console.error("No post ID");
+        throw new Error("No post ID");
+    }
 
+    const target = await context.reddit.getPostById(context.postId);
+
+    const nukeProps: NukeProps = {
+        remove: values.remove as boolean,
+        lock: values.lock as boolean,
+        skipDistinguished: values.skipDistinguished as boolean,
+        target,
+    };
+
+    if (!nukeProps.lock && !nukeProps.remove) {
+        context.ui.showToast("You must select either lock or remove.");
+        return;
+    }
+
+    await handleNuke(nukeProps, context);
+}
+
+export async function handleNukeCommentForm (event: FormOnSubmitEvent<JSONObject>, context: Context) {
+    const { values } = event;
+
+    if (!context.commentId) {
+        console.error("No comment ID");
+        throw new Error("No comment ID");
+    }
+
+    const target = await context.reddit.getCommentById(context.commentId);
+
+    const nukeProps: NukeProps = {
+        remove: values.remove as boolean,
+        lock: values.lock as boolean,
+        skipDistinguished: values.skipDistinguished as boolean,
+        target,
+    };
+
+    await handleNuke(nukeProps, context);
+}
+
+async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void> {
     try {
-        const comment = await context.reddit.getCommentById(props.commentId);
-        const user = await context.reddit.getCurrentUser();
-
-        if (!user) {
-            return { success: false, message: "Can't get user" };
-        }
-
-        const modPermissions = await user.getModPermissionsForSubreddit(comment.subredditName);
-        const canManagePosts = modPermissions.includes("all") || modPermissions.includes("posts");
-
-        console.log(`Mod Info: r/${comment.subredditName} u/${user.username} permissions:${modPermissions}: ${canManagePosts ? "Can mod" : "Cannot mod"}`);
-
-        if (!canManagePosts) {
-            console.info("A user without the correct mod permissions tried to comment mop.");
-            return {
-                message: "You do not have the correct mod permissions to do this.",
-                success: false,
-            };
-        }
-
         const comments: Comment[] = [];
-        for await (const eachComment of getAllCommentsInThread(comment, skipDistinguished)) {
-            comments.push(eachComment);
-        }
 
-        if (shouldLock) {
-            await Promise.all(comments.map(comment => comment.locked || comment.lock()));
-        }
-
-        if (shouldRemove) {
-            await Promise.all(comments.map(comment => comment.removed || comment.remove()));
-        }
-
-        let verbage: string;
-        if (shouldLock && shouldRemove) {
-            verbage = "removed and locked";
+        if (nukeProps.target instanceof Comment) {
+            for await (const eachComment of getAllCommentsInThread(nukeProps.target, nukeProps.skipDistinguished)) {
+                comments.push(eachComment);
+            }
         } else {
-            verbage = shouldLock ? "locked" : "removed";
-        }
-
-        if (shouldRemove) {
-            try {
-                await context.modLog.add({
-                    action: "removecomment",
-                    target: props.commentId,
-                    details: "comment-mop app",
-                    description: `u/${user.username} used comment-mop to ${verbage} this comment and all child comments.`,
-                });
-            } catch (e: unknown) {
-                console.error(
-                    `Failed to add modlog for comment: ${props.commentId}.`,
-                    (e as Error).message,
-                );
+            for await (const eachComment of getAllCommentsInPost(nukeProps.target, nukeProps.skipDistinguished)) {
+                comments.push(eachComment);
             }
         }
 
-        success = true;
-        message = `Comments ${verbage}! Refresh the page to see the cleanup.`;
-        const finishTime = Date.now();
-        const timeElapsed = (finishTime - startTime) / 1000;
-        console.info(`${comments.length} comment(s) handled in ${timeElapsed} seconds.`);
-    } catch (err: unknown) {
-        success = false;
-        message = "Mop failed! Please try again later.";
-        console.error(err);
-    }
+        const nukeResult = await nukeComments(comments, nukeProps.lock, nukeProps.remove);
+        if (!nukeResult) {
+            context.ui.showToast("Mop failed! Please try again later.");
+            return;
+        }
 
-    return { success, message };
+        let toastVerbage: string;
+        let logVerbage: string;
+        if (nukeProps.lock && nukeProps.remove) {
+            toastVerbage = "removed and locked";
+            logVerbage = "remove and lock";
+        } else {
+            toastVerbage = nukeProps.lock ? "locked" : "removed";
+            logVerbage = nukeProps.lock ? "lock" : "remove";
+        }
+
+        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} removed on ${nukeProps.target.id}.`);
+
+        if (nukeProps.remove) {
+            try {
+                await context.modLog.add({
+                    action: nukeProps.target instanceof Comment ? "removecomment" : "removelink",
+                    target: nukeProps.target.id,
+                    details: "comment-mop app",
+                    description: `${await context.reddit.getCurrentUsername()} used comment-mop to ${logVerbage} all comments of this post.`,
+                });
+            } catch (e: unknown) {
+                console.error(`Failed to add modlog for ${nukeProps.target.id}.`, (e as Error).message);
+            }
+        }
+
+        context.ui.showToast(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)}.`);
+    } catch (e) {
+        console.error("Failed to nuke comments:", e);
+    }
 }

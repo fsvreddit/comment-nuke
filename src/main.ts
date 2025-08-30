@@ -1,114 +1,77 @@
-import { Devvit, type FormField } from "@devvit/public-api";
+import { Devvit } from "@devvit/public-api";
+import { handleNukeCommentForm, handleNukePostForm, nukeFormDefinition } from "./nuke.js";
+import { appSettings, getNukeDefaults } from "./settings.js";
+import { canCurrentUserManagePostsAndComments, handleModAction } from "./userPermissions.js";
 
-import { handleNuke, handleNukePost } from "./nuke.js";
+Devvit.addSettings(appSettings);
 
 Devvit.configure({
     redditAPI: true,
     modLog: true,
 });
 
-const nukeFields: FormField[] = [
-    {
-        name: "remove",
-        label: "Remove comments",
-        type: "boolean",
-        defaultValue: true,
-    },
-    {
-        name: "lock",
-        label: "Lock comments",
-        type: "boolean",
-        defaultValue: false,
-    },
-    {
-        name: "skipDistinguished",
-        label: "Skip distinguished comments",
-        type: "boolean",
-        defaultValue: false,
-    },
-] as const;
+Devvit.addTrigger({
+    event: "ModAction",
+    onEvent: handleModAction,
+});
 
-const nukeForm = Devvit.createForm(
-    () => ({
-        fields: nukeFields,
-        title: "Mop Comments",
-        acceptLabel: "Mop",
-        cancelLabel: "Cancel",
-    }),
-    async ({ values }, context) => {
-        if (!values.lock && !values.remove) {
-            context.ui.showToast("You must select either lock or remove.");
-            return;
-        }
-
-        if (context.commentId) {
-            const result = await handleNuke(
-                {
-                    remove: values.remove as boolean,
-                    lock: values.lock as boolean,
-                    skipDistinguished: values.skipDistinguished as boolean,
-                    commentId: context.commentId,
-                    subredditId: context.subredditId,
-                },
-                context,
-            );
-            console.log(`Mop result - ${result.success ? "success" : "fail"} - ${result.message}`);
-            context.ui.showToast(`${result.success ? "Success" : "Failed"} : ${result.message}`);
-        } else {
-            context.ui.showToast(`Mop failed! Please try again later.`);
-        }
-    },
-);
+const nukeForm = Devvit.createForm(nukeFormDefinition, handleNukeCommentForm);
 
 Devvit.addMenuItem({
     label: "Mop comments",
     description: "Remove this comment and all child comments. This might take a few seconds to run.",
     location: "comment",
     forUserType: "moderator",
-    onPress: (_, context) => {
-        context.ui.showForm(nukeForm);
-    },
-});
-
-const nukePostForm = Devvit.createForm(
-    () => ({
-        fields: nukeFields,
-        title: "Mop Post Comments",
-        acceptLabel: "Mop",
-        cancelLabel: "Cancel",
-    }),
-    async ({ values }, context) => {
-        if (!values.lock && !values.remove) {
-            context.ui.showToast("You must select either lock or remove.");
+    onPress: async (_, context) => {
+        const canManagePostsAndComments = await canCurrentUserManagePostsAndComments(context);
+        if (canManagePostsAndComments === undefined) {
+            context.ui.showToast("Could not determine your mod permissions. Please try again later.");
             return;
         }
 
-        if (!context.postId) {
-            throw new Error("No post ID");
+        if (!canManagePostsAndComments) {
+            context.ui.showToast("You do not have the correct mod permissions to do this.");
+            return;
         }
 
-        const result = await handleNukePost(
-            {
-                remove: values.remove as boolean,
-                lock: values.lock as boolean,
-                skipDistinguished: values.skipDistinguished as boolean,
-                postId: context.postId,
-                subredditId: context.subredditId,
-            },
-            context,
-        );
-        console.log(`Mop result - ${result.success ? "success" : "fail"} - ${result.message}`);
-        context.ui.showToast(`${result.success ? "Success" : "Failed"} : ${result.message}`);
+        const nukeDefaults = await getNukeDefaults(context);
+        const nukeData = {
+            title: "Mop comments",
+            remove: nukeDefaults.remove,
+            lock: nukeDefaults.lock,
+            skipDistinguished: nukeDefaults.skipDistinguished,
+        };
+        context.ui.showForm(nukeForm, nukeData);
     },
-);
+});
+
+const nukePostForm = Devvit.createForm(nukeFormDefinition, handleNukePostForm);
 
 Devvit.addMenuItem({
     label: "Mop post comments",
     description: "Remove all comments of this post. This might take a few seconds to run.",
     location: "post",
     forUserType: "moderator",
-    onPress: (_, context) => {
-        context.ui.showForm(nukePostForm);
+    onPress: async (_, context) => {
+        const canManagePostsAndComments = await canCurrentUserManagePostsAndComments(context);
+        if (canManagePostsAndComments === undefined) {
+            context.ui.showToast("Could not determine your mod permissions. Please try again later.");
+            return;
+        }
+
+        if (!canManagePostsAndComments) {
+            context.ui.showToast("You do not have the correct mod permissions to do this.");
+            return;
+        }
+
+        const nukeDefaults = await getNukeDefaults(context);
+        const nukeData = {
+            title: "Mop post comments",
+            remove: nukeDefaults.remove,
+            lock: nukeDefaults.lock,
+            skipDistinguished: nukeDefaults.skipDistinguished,
+        };
+        context.ui.showForm(nukePostForm, nukeData);
     },
 });
 
