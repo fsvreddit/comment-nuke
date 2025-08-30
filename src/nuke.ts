@@ -176,7 +176,10 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             }
         }
 
-        context.ui.showToast(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)}.`);
+        context.ui.showToast({
+            text: `Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)}.`,
+            appearance: "success",
+        });
     } catch (e) {
         console.error("Failed to nuke comments:", e);
     }
