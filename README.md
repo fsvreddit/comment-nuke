@@ -8,6 +8,10 @@ From version 9.2, you can configure the default options for the Mop form in your
 
 This app was originally written by /u/FlyingLaserTurtle, with contributions from /u/ni5arga.
 
+## Source code and license
+
+Comment Mop is open source and licensed under the BSD Three Clause license. The source code is available on GitHub [here](https://github.com/fsvreddit/comment-nuke).
+
 ## Change History
 
 Coming soon in the next version:
