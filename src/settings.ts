@@ -3,7 +3,8 @@ import { NukeFormField } from "./nuke.js";
 
 export const appSettings: SettingsFormField = {
     type: "group",
-    label: "Comment Mop Defaults",
+    label: "Comment Mop defaults",
+    helpText: "This allows you to set the default values for the 'Mop Comments' form, if the standard defaults don't suit your workflow.",
     fields: [
         {
             name: NukeFormField.Remove,
