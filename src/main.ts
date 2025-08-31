@@ -1,7 +1,7 @@
 import { Devvit } from "@devvit/public-api";
 import { handleNukeCommentForm, handleNukePostForm, nukeFormDefinition } from "./nuke.js";
 import { appSettings, getNukeDefaults } from "./settings.js";
-import { canCurrentUserManagePostsAndComments, handleModAction } from "./userPermissions.js";
+import { handleModAction, preCheckNukePermissions } from "./userPermissions.js";
 
 Devvit.addSettings(appSettings);
 
@@ -23,14 +23,7 @@ Devvit.addMenuItem({
     location: "comment",
     forUserType: "moderator",
     onPress: async (_, context) => {
-        const canManagePostsAndComments = await canCurrentUserManagePostsAndComments(context);
-        if (canManagePostsAndComments === undefined) {
-            context.ui.showToast("Could not determine your mod permissions. Please try again later.");
-            return;
-        }
-
-        if (!canManagePostsAndComments) {
-            context.ui.showToast("You do not have the correct mod permissions to do this.");
+        if (!await preCheckNukePermissions(context)) {
             return;
         }
 
@@ -41,6 +34,8 @@ Devvit.addMenuItem({
             lock: nukeDefaults.lock,
             skipDistinguished: nukeDefaults.skipDistinguished,
         };
+
+        console.log(`Showing nuke comment form for user ${context.userId}`);
         context.ui.showForm(nukeForm, nukeData);
     },
 });
@@ -53,14 +48,7 @@ Devvit.addMenuItem({
     location: "post",
     forUserType: "moderator",
     onPress: async (_, context) => {
-        const canManagePostsAndComments = await canCurrentUserManagePostsAndComments(context);
-        if (canManagePostsAndComments === undefined) {
-            context.ui.showToast("Could not determine your mod permissions. Please try again later.");
-            return;
-        }
-
-        if (!canManagePostsAndComments) {
-            context.ui.showToast("You do not have the correct mod permissions to do this.");
+        if (!await preCheckNukePermissions(context)) {
             return;
         }
 
@@ -71,6 +59,8 @@ Devvit.addMenuItem({
             lock: nukeDefaults.lock,
             skipDistinguished: nukeDefaults.skipDistinguished,
         };
+
+        console.log(`Showing nuke post form for user ${context.userId}`);
         context.ui.showForm(nukePostForm, nukeData);
     },
 });

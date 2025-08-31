@@ -146,6 +146,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
         }
 
         if (comments.length === 0) {
+            console.log(`No comments found to mop for ${nukeProps.target.id}.`);
             context.ui.showToast("No comments found to mop.");
             return;
         }

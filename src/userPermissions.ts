@@ -1,8 +1,26 @@
 import { ModAction } from "@devvit/protos";
-import { Context, TriggerContext } from "@devvit/public-api";
+import { Context, TriggerContext, User } from "@devvit/public-api";
 
 function getPermissionsCacheKey (userId: string) {
     return `permissionsCache:${userId}`;
+}
+
+async function getCurrentUser (context: TriggerContext): Promise<User | undefined> {
+    // First, attempt to get user by conventional means.
+    try {
+        const user = await context.reddit.getCurrentUser();
+        return user;
+    } catch (error) {
+        console.error("Error fetching current user using getCurrentUser():", error);
+    }
+
+    // Fall back to getting the user from the moderators list.
+    const moderators = await context.reddit.getModerators({
+        subredditName: context.subredditName ?? await context.reddit.getCurrentSubredditName(),
+        username: await context.reddit.getCurrentUsername(),
+    }).all();
+
+    return moderators.find(moderator => moderator.id === context.userId);
 }
 
 export async function canCurrentUserManagePostsAndComments (context: Context): Promise<boolean | undefined> {
@@ -17,14 +35,9 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
         return JSON.parse(cachedValue) as boolean;
     }
 
-    const moderators = await context.reddit.getModerators({
-        subredditName: context.subredditName ?? await context.reddit.getCurrentSubredditName(),
-        username: await context.reddit.getCurrentUsername(),
-    }).all();
-
-    const currentUser = moderators.find(moderator => moderator.id === context.userId);
+    const currentUser = await getCurrentUser(context);
     if (!currentUser) {
-        console.error("Current user is not a moderator");
+        console.error("Current user could not be retrieved or is not a mod.");
         return false;
     }
 
@@ -36,6 +49,21 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
 
     console.log(`Cache miss for user ${currentUser.id}, can nuke: ${canManagePosts}`);
     return canManagePosts;
+}
+
+export async function preCheckNukePermissions (context: Context): Promise<boolean> {
+    const canManagePostsAndComments = await canCurrentUserManagePostsAndComments(context);
+    if (canManagePostsAndComments === undefined) {
+        context.ui.showToast("Could not determine your mod permissions. Please try again later.");
+        return false;
+    }
+
+    if (!canManagePostsAndComments) {
+        context.ui.showToast("You do not have the correct mod permissions to do this.");
+        return false;
+    }
+
+    return true;
 }
 
 export async function handleModAction (event: ModAction, context: TriggerContext) {
@@ -55,4 +83,5 @@ export async function handleModAction (event: ModAction, context: TriggerContext
     }
 
     await context.redis.del(getPermissionsCacheKey(event.targetUser.id));
+    console.log(`Cleared permissions cache for user ${event.targetUser.id} due to mod action ${event.action}`);
 }
