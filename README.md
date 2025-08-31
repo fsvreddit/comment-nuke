@@ -1,6 +1,6 @@
-A moderation tool used for deleting and locking an entire comment tree, starting with a single comment, or at an entire post level.
+A moderation tool used for removing and locking an entire comment tree, starting with a single comment, or at an entire post level.
 
-Run Comment Mop using the three-dot menu or mod shield menu (depending on platform) and chose the "Mop" option.
+Run Comment Mop using the three-dot menu or mod shield menu (depending on platform) and chose the "Mop" option. You can opt to remove and/or lock, and skip mod-distinguished comments if desired.
 
 From version 9.2, you can configure the default options for the Mop form in your app settings, which you can find via the [Developer Platform app portal(https://developers.reddit.com/my/communities)].
 
