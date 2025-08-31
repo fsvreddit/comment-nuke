@@ -132,6 +132,7 @@ export async function handleNukeCommentForm (event: FormOnSubmitEvent<JSONObject
 }
 
 async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void> {
+    const start = Date.now();
     try {
         const comments: Comment[] = [];
 
@@ -145,6 +146,9 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             }
         }
 
+        const commentGatherEnd = Date.now();
+        console.log(`Gathered ${comments.length} comments in ${commentGatherEnd - start}ms`);
+
         if (comments.length === 0) {
             console.log(`No comments found to mop for ${nukeProps.target.id}.`);
             context.ui.showToast("No comments found to mop.");
@@ -157,6 +161,8 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             return;
         }
 
+        const nukeEnd = Date.now();
+
         let toastVerbage: string;
         let logVerbage: string;
         if (nukeProps.lock && nukeProps.remove) {
@@ -167,7 +173,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
-        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id}.`);
+        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id} in ${nukeEnd - commentGatherEnd}ms.`);
 
         if (nukeProps.remove) {
             try {
@@ -187,6 +193,6 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             appearance: "success",
         });
     } catch (e) {
-        console.error("Failed to nuke comments:", e);
+        console.error(`Failed to nuke comments after ${Date.now() - start}ms:`, e);
     }
 }

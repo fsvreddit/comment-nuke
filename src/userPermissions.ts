@@ -29,9 +29,11 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
         return;
     }
 
+    const start = Date.now();
+
     const cachedValue = await context.redis.get(getPermissionsCacheKey(context.userId));
     if (cachedValue) {
-        console.log(`Cache hit for user ${context.userId}, can nuke: ${cachedValue}`);
+        console.log(`Cache hit for user ${context.userId}, can nuke: ${cachedValue}. Cache lookup took ${Date.now() - start}ms`);
         return JSON.parse(cachedValue) as boolean;
     }
 
@@ -47,7 +49,7 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
     const keyExpiry = Date.now() + 1000 * 28 * 24 * 60 * 60; // 28 days
     await context.redis.set(getPermissionsCacheKey(currentUser.id), JSON.stringify(canManagePosts), { expiration: new Date(keyExpiry) });
 
-    console.log(`Cache miss for user ${currentUser.id}, can nuke: ${canManagePosts}`);
+    console.log(`Cache miss for user ${currentUser.id}, can nuke: ${canManagePosts}. Lookup took ${Date.now() - start}ms`);
     return canManagePosts;
 }
 

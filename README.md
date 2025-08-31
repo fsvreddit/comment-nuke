@@ -18,3 +18,4 @@ Coming soon in the next version:
 
 * Fix error that causes Comment Mop to fail consistently for certain users
 * The ability to set defaults for the Comment Mop form.
+* Update to latest Dev Platform version
