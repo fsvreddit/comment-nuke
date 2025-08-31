@@ -1,12 +1,14 @@
-A moderation tool used for removing and locking an entire comment tree, starting with a single comment, or at an entire post level.
+A moderation tool used for removing and locking an entire comment tree, starting either with a single comment or at an entire post level.
 
 Run Comment Mop using the three-dot menu or mod shield menu (depending on platform) and chose the "Mop" option. You can opt to remove and/or lock, and skip mod-distinguished comments if desired.
 
-From version 9.2, you can configure the default options for the Mop form in your app settings, which you can find via the [Developer Platform app portal(https://developers.reddit.com/my/communities)].
+From version 9.2, you can configure the default options for the Mop form in your app settings, which you can find via the [Developer Platform app portal](https://developers.reddit.com/my/communities).
 
 ## Credits
 
 This app was originally written by /u/FlyingLaserTurtle, with contributions from /u/ni5arga.
+
+For support for Comment Mop, please contact /u/fsv (the current maintainer) rather than either of the above users.
 
 ## Source code and license
 
@@ -14,8 +16,8 @@ Comment Mop is open source and licensed under the BSD Three Clause license. The 
 
 ## Change History
 
-Coming soon in the next version:
+### v9.2.0 (coming soon!)
 
-* Fix error that causes Comment Mop to fail consistently for certain users
-* The ability to set defaults for the Comment Mop form.
+* Fix an error that causes Comment Mop to fail consistently for certain users
+* The ability to set defaults for the Comment Mop form if the default values don't suit your sub's workflow
 * Update to latest Dev Platform version
