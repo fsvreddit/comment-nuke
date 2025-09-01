@@ -13,3 +13,4 @@ jobs:
       - run: npm install
       - run: npx tsc --build --clean
       - run: npx eslint
+      - run: npm run test
