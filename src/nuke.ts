@@ -1,4 +1,5 @@
 import { Comment, Context, FormFunction, FormOnSubmitEvent, JSONObject, Post } from "@devvit/public-api";
+import _ from "lodash";
 import pluralize from "pluralize";
 
 export enum NukeFormField {
@@ -68,17 +69,19 @@ async function getAllCommentsInPost (post: Post, skipDistinguished: boolean): Pr
 
 async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean): Promise<boolean> {
     try {
-        const promises: Promise<void>[] = [];
+        // Chunk comments into 30 items at a a time to reduce the risk of failure.
+        const commentChunks = _.chunk(comments, 30);
 
-        if (shouldRemove) {
-            promises.push(...comments.map(comment => comment.remove()));
+        for (const chunk of commentChunks) {
+            if (shouldRemove) {
+                await Promise.all(chunk.map(comment => comment.remove()));
+            }
+
+            if (shouldLock) {
+                await Promise.all(chunk.map(comment => comment.lock()));
+            }
         }
 
-        if (shouldLock) {
-            promises.push(...comments.map(comment => comment.lock()));
-        }
-
-        await Promise.all(promises);
         return true;
     } catch (error) {
         console.error("Failed to nuke comments:", error);
@@ -159,6 +162,8 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
 
         const nukeEnd = Date.now();
 
+        const currentUsername = await context.reddit.getCurrentUsername();
+
         let toastVerbage: string;
         let logVerbage: string;
         if (nukeProps.lock && nukeProps.remove) {
@@ -169,7 +174,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
-        console.log(`Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id} in ${nukeEnd - commentGatherEnd}ms.`);
+        console.log(`/u/${currentUsername} successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id} in ${nukeEnd - commentGatherEnd}ms.`);
 
         if (nukeProps.remove) {
             try {
@@ -177,7 +182,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
                     action: nukeProps.target instanceof Comment ? "removecomment" : "removelink",
                     target: nukeProps.target.id,
                     details: "comment-mop app",
-                    description: `${await context.reddit.getCurrentUsername()} used comment-mop to ${logVerbage} all comments of this post.`,
+                    description: `${currentUsername} used comment-mop to ${logVerbage} all comments of this post.`,
                 });
             } catch (e: unknown) {
                 console.error(`Failed to add modlog for ${nukeProps.target.id}.`, (e as Error).message);
