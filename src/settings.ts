@@ -9,20 +9,28 @@ export const appSettings: SettingsFormField = {
         {
             name: NukeFormField.Remove,
             type: "boolean",
-            label: "Remove Comments",
+            label: "Remove comments",
             defaultValue: true,
         },
         {
             name: NukeFormField.Lock,
             type: "boolean",
-            label: "Lock Comments",
+            label: "Lock comments",
             defaultValue: false,
         },
         {
             name: NukeFormField.SkipDistinguished,
+            label: "Skip distinguished comments",
+            helpText: "If set, the app will not remove/lock comments with the Mod badge",
             type: "boolean",
-            label: "Skip Distinguished comments",
             defaultValue: false,
+        },
+        {
+            name: NukeFormField.SkipAlreadyActioned,
+            label: "Skip already actioned comments",
+            helpText: "If set, the app will not remove/lock comments that have already been removed/locked",
+            type: "boolean",
+            defaultValue: true,
         },
     ],
 };
@@ -33,5 +41,6 @@ export async function getNukeDefaults (context: Context) {
         remove: settings[NukeFormField.Remove] as boolean | undefined ?? true,
         lock: settings[NukeFormField.Lock] as boolean | undefined ?? false,
         skipDistinguished: settings[NukeFormField.SkipDistinguished] as boolean | undefined ?? false,
+        skipAlreadyActioned: settings[NukeFormField.SkipAlreadyActioned] as boolean | undefined ?? true,
     };
 }

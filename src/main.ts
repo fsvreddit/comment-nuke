@@ -33,6 +33,7 @@ Devvit.addMenuItem({
             remove: nukeDefaults.remove,
             lock: nukeDefaults.lock,
             skipDistinguished: nukeDefaults.skipDistinguished,
+            skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
         };
 
         console.log(`Showing nuke comment form for user ${context.userId}`);
@@ -58,6 +59,7 @@ Devvit.addMenuItem({
             remove: nukeDefaults.remove,
             lock: nukeDefaults.lock,
             skipDistinguished: nukeDefaults.skipDistinguished,
+            skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
         };
 
         console.log(`Showing nuke post form for user ${context.userId}`);

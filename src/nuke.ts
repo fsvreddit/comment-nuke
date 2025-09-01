@@ -6,6 +6,7 @@ export enum NukeFormField {
     Remove = "remove",
     Lock = "lock",
     SkipDistinguished = "skipDistinguished",
+    SkipAlreadyActioned = "skipAlreadyActioned",
 }
 
 export const nukeFormDefinition: FormFunction = data => ({
@@ -13,21 +14,29 @@ export const nukeFormDefinition: FormFunction = data => ({
     fields: [
         {
             name: NukeFormField.Remove,
-            label: "Remove Comments",
+            label: "Remove comments",
             type: "boolean",
             defaultValue: data.remove as boolean,
         },
         {
             name: NukeFormField.Lock,
-            label: "Lock Comments",
+            label: "Lock comments",
             type: "boolean",
             defaultValue: data.lock as boolean,
         },
         {
             name: NukeFormField.SkipDistinguished,
-            label: "Skip Distinguished Comments",
+            label: "Skip distinguished comments",
+            helpText: "If set, the app will not remove/lock comments with the Mod badge",
             type: "boolean",
             defaultValue: data.skipDistinguished as boolean,
+        },
+        {
+            name: NukeFormField.SkipAlreadyActioned,
+            label: "Skip already actioned comments",
+            helpText: "If set, the app will not remove/lock comments that have already been removed/locked",
+            type: "boolean",
+            defaultValue: data.skipAlreadyActioned as boolean,
         },
     ],
     acceptLabel: "Mop",
@@ -37,7 +46,8 @@ export const nukeFormDefinition: FormFunction = data => ({
 export interface NukeProps {
     remove: boolean;
     lock: boolean;
-    skipDistinguished: boolean; // When true, distinguished comments and their children are not processed
+    skipDistinguished: boolean;
+    skipAlreadyActioned: boolean;
     target: Post | Comment;
 }
 
@@ -67,18 +77,26 @@ async function getAllCommentsInPost (post: Post, skipDistinguished: boolean): Pr
     return comments;
 }
 
-async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean): Promise<boolean> {
+async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean, skipAlreadyActioned: boolean): Promise<boolean> {
     try {
         // Chunk comments into 30 items at a a time to reduce the risk of failure.
         const commentChunks = _.chunk(comments, 30);
 
         for (const chunk of commentChunks) {
             if (shouldRemove) {
-                await Promise.all(chunk.map(comment => comment.remove()));
+                if (skipAlreadyActioned) {
+                    await Promise.all(chunk.filter(comment => !comment.removed).map(comment => comment.remove()));
+                } else {
+                    await Promise.all(chunk.map(comment => comment.remove()));
+                }
             }
 
             if (shouldLock) {
-                await Promise.all(chunk.map(comment => comment.lock()));
+                if (skipAlreadyActioned) {
+                    await Promise.all(chunk.filter(comment => !comment.locked).map(comment => comment.lock()));
+                } else {
+                    await Promise.all(chunk.map(comment => comment.lock()));
+                }
             }
         }
 
@@ -103,6 +121,7 @@ export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, 
         remove: values.remove as boolean,
         lock: values.lock as boolean,
         skipDistinguished: values.skipDistinguished as boolean,
+        skipAlreadyActioned: values.skipAlreadyActioned as boolean,
         target,
     };
 
@@ -128,6 +147,7 @@ export async function handleNukeCommentForm (event: FormOnSubmitEvent<JSONObject
         remove: values.remove as boolean,
         lock: values.lock as boolean,
         skipDistinguished: values.skipDistinguished as boolean,
+        skipAlreadyActioned: values.skipAlreadyActioned as boolean,
         target,
     };
 
@@ -154,7 +174,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             return;
         }
 
-        const nukeResult = await nukeComments(comments, nukeProps.lock, nukeProps.remove);
+        const nukeResult = await nukeComments(comments, nukeProps.lock, nukeProps.remove, nukeProps.skipAlreadyActioned);
         if (!nukeResult) {
             context.ui.showToast("Mop failed! Please try again later.");
             return;
@@ -190,7 +210,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
         }
 
         context.ui.showToast({
-            text: `Successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)}.`,
+            text: `Successfully ${toastVerbage} comments! Refresh the page to see the cleanup.`,
             appearance: "success",
         });
     } catch (e) {
