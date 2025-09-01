@@ -1,5 +1,5 @@
 import { Comment, Context, FormFunction, FormOnSubmitEvent, JSONObject, Post } from "@devvit/public-api";
-import _ from "lodash";
+import { chunk } from "lodash";
 import pluralize from "pluralize";
 
 export enum NukeFormField {
@@ -80,7 +80,7 @@ async function getAllCommentsInPost (post: Post, skipDistinguished: boolean): Pr
 async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean, skipAlreadyActioned: boolean): Promise<boolean> {
     try {
         // Chunk comments into 30 items at a a time to reduce the risk of failure.
-        const commentChunks = _.chunk(comments, 30);
+        const commentChunks = chunk(comments, 30);
 
         for (const chunk of commentChunks) {
             if (shouldRemove) {
