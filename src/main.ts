@@ -27,13 +27,9 @@ Devvit.addMenuItem({
             return;
         }
 
-        const nukeDefaults = await getNukeDefaults(context);
         const nukeData = {
             title: "Mop comments",
-            remove: nukeDefaults.remove,
-            lock: nukeDefaults.lock,
-            skipDistinguished: nukeDefaults.skipDistinguished,
-            skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
+            ...await getNukeDefaults(context),
         };
 
         console.log(`${context.commentId}: Showing nuke comment form for user ${context.userId}`);
@@ -53,13 +49,9 @@ Devvit.addMenuItem({
             return;
         }
 
-        const nukeDefaults = await getNukeDefaults(context);
         const nukeData = {
             title: "Mop post comments",
-            remove: nukeDefaults.remove,
-            lock: nukeDefaults.lock,
-            skipDistinguished: nukeDefaults.skipDistinguished,
-            skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
+            ...await getNukeDefaults(context),
         };
 
         console.log(`${context.postId}: Showing nuke post form for user ${context.userId}`);
