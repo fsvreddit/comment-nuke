@@ -166,7 +166,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
         }
 
         const commentGatherEnd = Date.now();
-        console.log(`Gathered ${comments.length} comments in ${commentGatherEnd - start}ms`);
+        console.log(`Gathered ${comments.length} ${pluralize("comment", comments.length)} in ${commentGatherEnd - start}ms`);
 
         if (comments.length === 0) {
             console.log(`No comments found to mop for ${nukeProps.target.id}.`);
