@@ -49,7 +49,7 @@ export async function canCurrentUserManagePostsAndComments (context: Context): P
     const keyExpiry = Date.now() + 1000 * 28 * 24 * 60 * 60; // 28 days
     await context.redis.set(getPermissionsCacheKey(currentUser.id), JSON.stringify(canManagePosts), { expiration: new Date(keyExpiry) });
 
-    console.log(`Cache miss for user ${currentUser.id}, can nuke: ${canManagePosts}. Lookup took ${Date.now() - start}ms`);
+    console.log(`Cache miss for user ${currentUser.username}, can nuke: ${canManagePosts}. Lookup took ${Date.now() - start}ms`);
     return canManagePosts;
 }
 
