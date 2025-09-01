@@ -16,7 +16,7 @@ Comment Mop is open source and licensed under the BSD Three Clause license. The 
 
 ## Change History
 
-### v9.2.0 (coming soon!)
+### v9.2.0
 
 * Fix an error that causes Comment Mop to fail consistently for certain users
 * The ability to set defaults for the Comment Mop form if the default values don't suit your sub's workflow
