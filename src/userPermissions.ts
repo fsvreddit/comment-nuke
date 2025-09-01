@@ -5,7 +5,7 @@ function getPermissionsCacheKey (userId: string) {
     return `permissionsCache:${userId}`;
 }
 
-async function getCurrentUser (context: TriggerContext): Promise<User | undefined> {
+async function getCurrentUser (context: Context): Promise<User | undefined> {
     // First, attempt to get user by conventional means.
     try {
         const user = await context.reddit.getCurrentUser();
