@@ -169,7 +169,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
         console.log(`Gathered ${comments.length} ${pluralize("comment", comments.length)} in ${commentGatherEnd - start}ms`);
 
         if (comments.length === 0) {
-            console.log(`No comments found to mop for ${nukeProps.target.id}.`);
+            console.log(`${nukeProps.target.id}: No comments found to mop.`);
             context.ui.showToast("No comments found to mop.");
             return;
         }
@@ -194,7 +194,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
-        console.log(`/u/${currentUsername} successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} on ${nukeProps.target.id} in ${nukeEnd - commentGatherEnd}ms.`);
+        console.log(`${nukeProps.target.id}: /u/${currentUsername} successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} in ${nukeEnd - commentGatherEnd}ms.`);
 
         if (nukeProps.remove) {
             try {
@@ -214,6 +214,6 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             appearance: "success",
         });
     } catch (e) {
-        console.error(`Failed to nuke comments after ${Date.now() - start}ms:`, e);
+        console.error(`${nukeProps.target.id}: Failed to nuke comments after ${Date.now() - start}ms:`, e);
     }
 }

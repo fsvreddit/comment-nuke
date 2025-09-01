@@ -36,7 +36,7 @@ Devvit.addMenuItem({
             skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
         };
 
-        console.log(`Showing nuke comment form for user ${context.userId}`);
+        console.log(`${context.commentId}: Showing nuke comment form for user ${context.userId}`);
         context.ui.showForm(nukeForm, nukeData);
     },
 });
@@ -62,7 +62,7 @@ Devvit.addMenuItem({
             skipAlreadyActioned: nukeDefaults.skipAlreadyActioned,
         };
 
-        console.log(`Showing nuke post form for user ${context.userId}`);
+        console.log(`${context.postId}: Showing nuke post form for user ${context.userId}`);
         context.ui.showForm(nukePostForm, nukeData);
     },
 });
