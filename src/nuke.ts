@@ -40,30 +40,30 @@ export interface NukeProps {
     target: Post | Comment;
 }
 
-// Depth-first traversal to get all comments in a thread
-async function* getAllCommentsInThread (
-    comment: Comment,
-    skipDistinguished: boolean,
-): AsyncGenerator<Comment> {
+async function getAllCommentsInThread (comment: Comment, skipDistinguished: boolean): Promise<Comment[]> {
+    const comments: Comment[] = [];
+
     if (!skipDistinguished || !comment.isDistinguished()) {
-        yield comment;
+        comments.push(comment);
     }
 
     const replies = await comment.replies.all();
-    for (const reply of replies) {
-        yield* getAllCommentsInThread(reply, skipDistinguished);
-    }
+    const replyResults = await Promise.all(replies.map(reply => getAllCommentsInThread(reply, skipDistinguished)));
+
+    comments.push(...replyResults.flat());
+
+    return comments;
 }
 
-// Depth-first traversal to get all comments in a post
-async function* getAllCommentsInPost (
-    post: Post,
-    skipDistinguished: boolean,
-): AsyncGenerator<Comment> {
-    const comments = await post.comments.all();
-    for (const comment of comments) {
-        yield* getAllCommentsInThread(comment, skipDistinguished);
-    }
+async function getAllCommentsInPost (post: Post, skipDistinguished: boolean): Promise<Comment[]> {
+    const comments: Comment[] = [];
+
+    const replies = await post.comments.all();
+    const replyResults = await Promise.all(replies.map(reply => getAllCommentsInThread(reply, skipDistinguished)));
+
+    comments.push(...replyResults.flat());
+
+    return comments;
 }
 
 async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean): Promise<boolean> {
@@ -134,16 +134,12 @@ export async function handleNukeCommentForm (event: FormOnSubmitEvent<JSONObject
 async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void> {
     const start = Date.now();
     try {
-        const comments: Comment[] = [];
+        let comments: Comment[];
 
         if (nukeProps.target instanceof Comment) {
-            for await (const eachComment of getAllCommentsInThread(nukeProps.target, nukeProps.skipDistinguished)) {
-                comments.push(eachComment);
-            }
+            comments = await getAllCommentsInThread(nukeProps.target, nukeProps.skipDistinguished);
         } else {
-            for await (const eachComment of getAllCommentsInPost(nukeProps.target, nukeProps.skipDistinguished)) {
-                comments.push(eachComment);
-            }
+            comments = await getAllCommentsInPost(nukeProps.target, nukeProps.skipDistinguished);
         }
 
         const commentGatherEnd = Date.now();
