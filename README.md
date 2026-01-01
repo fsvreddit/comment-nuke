@@ -16,6 +16,10 @@ Comment Mop is open source and licensed under the BSD Three Clause license. The 
 
 ## Change History
 
+### Next version:
+
+* More reliable mopping of extremely large threads
+
 ### v9.2.0
 
 * Fix an error that causes Comment Mop to fail consistently for certain users
