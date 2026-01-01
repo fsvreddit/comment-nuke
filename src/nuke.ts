@@ -109,9 +109,13 @@ export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, 
         return;
     }
 
-    if (nukeProps.lock && !nukeProps.remove && !target.locked) {
-        await target.lock();
-        context.ui.showToast("Rather than locking individual comments, the post has been locked.");
+    if (nukeProps.lock && !nukeProps.remove) {
+        if (target.locked) {
+            context.ui.showToast("The post is already locked. Locking individual comments is not necessary.");
+        } else {
+            await target.lock();
+            context.ui.showToast("Rather than locking individual comments, the post has been locked.");
+        }
         return;
     }
 
