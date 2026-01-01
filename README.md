@@ -4,6 +4,8 @@ Run Comment Mop using the three-dot menu or mod shield menu (depending on platfo
 
 From version 9.2, you can configure the default options for the Mop form in your app settings, which you can find via the [Developer Platform app portal](https://developers.reddit.com/my/communities).
 
+Mopping extremely large chains can fail, if this happens please try again, ensuring that the option to skip already actioned comments is enabled.
+
 ## Credits
 
 This app was originally written by /u/FlyingLaserTurtle, with contributions from /u/ni5arga.
@@ -12,7 +14,7 @@ For support for Comment Mop, please contact /u/fsv (the current maintainer) rath
 
 ## Source code and license
 
-Comment Mop is open source and licensed under the BSD Three Clause license. The source code is available on GitHub [here](https://github.com/fsvreddit/comment-nuke).
+Comment Mop is open source and licensed under the BSD Three Clause license. [The source code is available on GitHub here](https://github.com/fsvreddit/comment-nuke).
 
 ## Change History
 
