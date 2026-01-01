@@ -89,8 +89,6 @@ async function actionAllCommentsInPost (post: Post, nukeProps: NukeProps) {
 }
 
 export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, context: Context) {
-    const { values } = event;
-
     if (!context.postId) {
         console.error("No post ID");
         throw new Error("No post ID");
@@ -99,10 +97,10 @@ export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, 
     const target = await context.reddit.getPostById(context.postId);
 
     const nukeProps: NukeProps = {
-        remove: values.remove as boolean,
-        lock: values.lock as boolean,
-        skipDistinguished: values.skipDistinguished as boolean,
-        skipAlreadyActioned: values.skipAlreadyActioned as boolean,
+        remove: event.values.remove as boolean,
+        lock: event.values.lock as boolean,
+        skipDistinguished: event.values.skipDistinguished as boolean,
+        skipAlreadyActioned: event.values.skipAlreadyActioned as boolean,
         target,
     };
 
