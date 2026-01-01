@@ -1,5 +1,4 @@
 import { Comment, Context, FormFunction, FormOnSubmitEvent, JSONObject, Post } from "@devvit/public-api";
-import { chunk } from "lodash";
 import pluralize from "pluralize";
 
 export enum NukeFormField {
@@ -51,60 +50,42 @@ export interface NukeProps {
     target: Post | Comment;
 }
 
-async function getAllCommentsInThread (comment: Comment, skipDistinguished: boolean): Promise<Comment[]> {
-    const comments: Comment[] = [];
+interface ActionResult {
+    promises: Promise<void>[];
+    commentsActioned: number;
+}
 
-    if (!skipDistinguished || !comment.isDistinguished()) {
-        comments.push(comment);
+async function actionAllCommentsInThread (comment: Comment, nukeProps: NukeProps): Promise<ActionResult> {
+    const promises: Promise<void>[] = [];
+    let actioned = false;
+
+    if (nukeProps.remove && (!nukeProps.skipDistinguished || !comment.isDistinguished()) && (!nukeProps.skipAlreadyActioned || !comment.removed)) {
+        promises.push(comment.remove());
+        actioned = true;
+    }
+
+    if (nukeProps.lock && (!nukeProps.skipAlreadyActioned || !comment.locked)) {
+        promises.push(comment.lock());
+        actioned = true;
     }
 
     const replies = await comment.replies.all();
-    const replyResults = await Promise.all(replies.map(reply => getAllCommentsInThread(reply, skipDistinguished)));
+    const actions = await Promise.all(replies.map(reply => actionAllCommentsInThread(reply, nukeProps)));
 
-    comments.push(...replyResults.flat());
-
-    return comments;
+    return {
+        promises: [...promises, ...actions.map(action => action.promises).flat()],
+        commentsActioned: (actioned ? 1 : 0) + actions.reduce((sum, action) => sum + action.commentsActioned, 0),
+    };
 }
 
-async function getAllCommentsInPost (post: Post, skipDistinguished: boolean): Promise<Comment[]> {
-    const comments: Comment[] = [];
-
+async function actionAllCommentsInPost (post: Post, nukeProps: NukeProps) {
     const replies = await post.comments.all();
-    const replyResults = await Promise.all(replies.map(reply => getAllCommentsInThread(reply, skipDistinguished)));
+    const actions = await Promise.all(replies.map(reply => actionAllCommentsInThread(reply, nukeProps)));
 
-    comments.push(...replyResults.flat());
-
-    return comments;
-}
-
-async function nukeComments (comments: Comment[], shouldLock: boolean, shouldRemove: boolean, skipAlreadyActioned: boolean): Promise<boolean> {
-    try {
-        // Chunk comments into 30 items at a a time to reduce the risk of failure.
-        const commentChunks = chunk(comments, 30);
-
-        for (const chunk of commentChunks) {
-            if (shouldRemove) {
-                if (skipAlreadyActioned) {
-                    await Promise.all(chunk.filter(comment => !comment.removed).map(comment => comment.remove()));
-                } else {
-                    await Promise.all(chunk.map(comment => comment.remove()));
-                }
-            }
-
-            if (shouldLock) {
-                if (skipAlreadyActioned) {
-                    await Promise.all(chunk.filter(comment => !comment.locked).map(comment => comment.lock()));
-                } else {
-                    await Promise.all(chunk.map(comment => comment.lock()));
-                }
-            }
-        }
-
-        return true;
-    } catch (error) {
-        console.error("Failed to nuke comments:", error);
-        return false;
-    }
+    return {
+        promises: actions.map(action => action.promises).flat(),
+        commentsActioned: actions.reduce((sum, action) => sum + action.commentsActioned, 0),
+    };
 }
 
 export async function handleNukePostForm (event: FormOnSubmitEvent<JSONObject>, context: Context) {
@@ -157,25 +138,25 @@ export async function handleNukeCommentForm (event: FormOnSubmitEvent<JSONObject
 async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void> {
     const start = Date.now();
     try {
-        let comments: Comment[];
+        let actionResult: ActionResult;
 
         if (nukeProps.target instanceof Comment) {
-            comments = await getAllCommentsInThread(nukeProps.target, nukeProps.skipDistinguished);
+            actionResult = await actionAllCommentsInThread(nukeProps.target, nukeProps);
         } else {
-            comments = await getAllCommentsInPost(nukeProps.target, nukeProps.skipDistinguished);
+            actionResult = await actionAllCommentsInPost(nukeProps.target, nukeProps);
         }
 
         const commentGatherEnd = Date.now();
-        console.log(`Gathered ${comments.length} ${pluralize("comment", comments.length)} in ${commentGatherEnd - start}ms`);
-
-        if (comments.length === 0) {
+        console.log(`Gathered ${actionResult.promises.length} ${pluralize("promises", actionResult.promises.length)} in ${commentGatherEnd - start}ms`);
+        if (actionResult.promises.length === 0) {
             console.log(`${nukeProps.target.id}: No comments found to mop.`);
             context.ui.showToast("No comments found to mop.");
             return;
         }
 
-        const nukeResult = await nukeComments(comments, nukeProps.lock, nukeProps.remove, nukeProps.skipAlreadyActioned);
-        if (!nukeResult) {
+        const results = await Promise.allSettled(actionResult.promises);
+
+        if (results.some(result => result.status === "rejected")) {
             context.ui.showToast("Mop failed! Please try again later.");
             return;
         }
@@ -194,7 +175,7 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
             logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
-        console.log(`${nukeProps.target.id}: /u/${currentUsername} successfully ${toastVerbage} ${comments.length} ${pluralize("comment", comments.length)} in ${nukeEnd - commentGatherEnd}ms.`);
+        console.log(`${nukeProps.target.id}: /u/${currentUsername} successfully ${toastVerbage} ${actionResult.commentsActioned} ${pluralize("comment", actionResult.commentsActioned)} in ${nukeEnd - commentGatherEnd}ms.`);
 
         if (nukeProps.remove) {
             try {
