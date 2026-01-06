@@ -18,7 +18,7 @@ Comment Mop is open source and licensed under the BSD Three Clause license. [The
 
 ## Change History
 
-### Next version:
+### v9.2.3
 
 * More reliable mopping of extremely large threads
 
