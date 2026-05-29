@@ -7,7 +7,6 @@ Devvit.addSettings(appSettings);
 
 Devvit.configure({
     redditAPI: true,
-    modLog: true,
 });
 
 Devvit.addTrigger({

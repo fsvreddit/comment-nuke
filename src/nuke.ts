@@ -174,29 +174,13 @@ async function handleNuke (nukeProps: NukeProps, context: Context): Promise<void
         const currentUsername = await context.reddit.getCurrentUsername();
 
         let toastVerbage: string;
-        let logVerbage: string;
         if (nukeProps.lock && nukeProps.remove) {
             toastVerbage = "removed and locked";
-            logVerbage = "remove and lock";
         } else {
             toastVerbage = nukeProps.lock ? "locked" : "removed";
-            logVerbage = nukeProps.lock ? "lock" : "remove";
         }
 
         console.log(`${nukeProps.target.id}: /u/${currentUsername} successfully ${toastVerbage} ${actionResult.commentsActioned} ${pluralize("comment", actionResult.commentsActioned)} in ${nukeEnd - commentGatherEnd}ms.`);
-
-        if (nukeProps.remove) {
-            try {
-                await context.modLog.add({
-                    action: nukeProps.target instanceof Comment ? "removecomment" : "removelink",
-                    target: nukeProps.target.id,
-                    details: "comment-mop app",
-                    description: `${currentUsername} used comment-mop to ${logVerbage} all comments of this post.`,
-                });
-            } catch (e: unknown) {
-                console.error(`Failed to add modlog for ${nukeProps.target.id}.`, (e as Error).message);
-            }
-        }
 
         context.ui.showToast({
             text: `Successfully ${toastVerbage} comments! Refresh the page to see the cleanup.`,
