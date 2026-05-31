@@ -14,4 +14,4 @@ jobs:
       - run: npx eslint
       - run: npm run type-check
       - run: npm run build
-      # - run: npm run test # No test files in this solution
+      - run: npm run test
