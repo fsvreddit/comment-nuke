@@ -5,19 +5,33 @@
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
-    "test": "npm run test:unit",
-    "test:unit": "vitest --run"
+    "build": "vite build",
+    "deploy": "npm run type-check && npm run lint && npm run test && devvit upload",
+    "dev": "devvit playtest",
+    "launch": "npm run deploy && devvit publish",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "login": "devvit login",
+    "test": "vitest run --config vitest.config.ts",
+    "type-check": "tsc --build"
+  },
+  "engines": {
+    "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/protos": "0.13.0",
-    "@devvit/public-api": "0.13.0",
+    "@devvit/start": "0.13.0",
+    "@devvit/web": "0.13.0",
+    "@hono/node-server": "^2.0.0",
+    "hono": "^4.11.7",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@fsvreddit/eslint-config": "github:fsvreddit/eslint-config",
+    "@types/node": "^22.19.7",
     "@types/pluralize": "^0.0.33",
+    "devvit": "0.13.0",
     "eslint": "^10.0.0",
     "typescript": "5.8.3",
+    "vite": "^8.0.0",
     "vitest": "^4.0.7"
   }
 }
