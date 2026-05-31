@@ -54,6 +54,11 @@
                 "helpText": "If set, comments already removed or locked (depending on what actions have been selected) won't get removed or locked again. Generally speaking, this is the desired behavior.",
                 "type": "boolean",
                 "defaultValue": true
+            },
+            "restrictedMods": {
+                "label": "Restricted Mods",
+                "type": "string",
+                "helpText": "A comma-separated list of mods who may not use Comment Mop. Not case sensitive."
             }
         }
     },

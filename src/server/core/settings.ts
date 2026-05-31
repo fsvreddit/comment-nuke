@@ -10,3 +10,11 @@ export async function getNukeDefaults () {
         skipAlreadyActioned: appSettings[NukeFormField.SkipAlreadyActioned] as boolean | undefined ?? true,
     };
 }
+
+export enum AppSetting {
+    Remove = "remove",
+    Lock = "lock",
+    SkipDistinguished = "skipDistinguished",
+    SkipAlreadyActioned = "skipAlreadyActioned",
+    RestrictedMods = "restrictedMods",
+}

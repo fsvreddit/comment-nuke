@@ -1,5 +1,6 @@
-import { context, reddit, redis, User } from "@devvit/web/server";
+import { context, reddit, redis, settings, User } from "@devvit/web/server";
 import { UiResponse } from "@devvit/web/shared";
+import { AppSetting } from "./settings";
 
 function getPermissionsCacheKey (userId: string) {
     return `permissionsCache:${userId}`;
@@ -41,6 +42,15 @@ export async function canCurrentUserManagePostsAndComments (): Promise<boolean |
     if (!currentUser) {
         console.error("Current user could not be retrieved or is not a mod.");
         return false;
+    }
+
+    const restrictedModsVal = await settings.get<string>(AppSetting.RestrictedMods);
+    if (restrictedModsVal) {
+        const restrictedMods = new Set(restrictedModsVal.split(",").map(mod => mod.trim().toLowerCase()));
+        if (restrictedMods.has(currentUser.username.toLowerCase())) {
+            console.error("Current user is restricted from using Comment Mop.");
+            return false;
+        }
     }
 
     const modPermissions = await currentUser.getModPermissionsForSubreddit(context.subredditName);
