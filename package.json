@@ -18,8 +18,8 @@
     "node": ">=22.2.0"
   },
   "dependencies": {
-    "@devvit/start": "0.13.0",
-    "@devvit/web": "0.13.0",
+    "@devvit/start": "0.13.3",
+    "@devvit/web": "0.13.3",
     "@hono/node-server": "^2.0.0",
     "hono": "^4.11.7",
     "pluralize": "^8.0.0"
@@ -28,7 +28,7 @@
     "@fsvreddit/eslint-config": "github:fsvreddit/eslint-config",
     "@types/node": "^22.19.7",
     "@types/pluralize": "^0.0.33",
-    "devvit": "0.13.0",
+    "devvit": "0.13.3",
     "eslint": "^10.0.0",
     "typescript": "5.8.3",
     "vite": "^8.0.0",
