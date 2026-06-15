@@ -18,6 +18,12 @@ Comment Mop is open source and licensed under the BSD Three Clause license. [The
 
 ## Change History
 
+### v9.3.0 (coming soon)
+
+* "Success" message now tells you how many comments were locked/removed
+* Add ability to configure a list of mods who may not use Comment Mop, such as for mods during a probationary period
+* Update to latest Dev Platform version
+
 ### v9.2.3
 
 * More reliable mopping of extremely large threads

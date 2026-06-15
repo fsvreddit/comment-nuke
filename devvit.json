@@ -1,10 +1,72 @@
 {
     "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
     "name": "comment-nuke",
-    "blocks": {
-        "entry": "src/main.ts",
-        "triggers": [
-            "onModAction"
+    "dev": {
+        "subreddit": "fsvsandbox"
+    },
+    "forms": {
+        "mopComments": "/internal/forms/mop-comments"
+    },
+    "marketingAssets": {
+        "icon": "assets/icon.png"
+    },
+    "menu": {
+        "items": [
+            {
+                "label": "Mop Comments",
+                "description": "Remove this comment and all child comments. This might take a few seconds to run.",
+                "location": "comment",
+                "forUserType": "moderator",
+                "endpoint": "/internal/menus/mop-comments"
+            },
+            {
+                "label": "Mop post comments",
+                "description": "Remove all comments on this post. This might take a few seconds to run.",
+                "location": "post",
+                "forUserType": "moderator",
+                "endpoint": "/internal/menus/mop-comments"
+            }
         ]
+    },
+    "server": {
+        "dir": "dist/server",
+        "entry": "index.cjs"
+    },
+    "settings": {
+        "subreddit": {
+            "remove": {
+                "label": "Default for Remove Comments",
+                "type": "boolean",
+                "defaultValue": true
+            },
+            "lock": {
+                "label": "Default for Lock Comments",
+                "type": "boolean",
+                "defaultValue": false
+            },
+            "skipDistinguished": {
+                "label": "Default forSkip Distinguished Comments",
+                "type": "boolean",
+                "defaultValue": true
+            },
+            "skipAlreadyActioned": {
+                "label": "Default for Skip Already Actioned Comments",
+                "helpText": "If set, comments already removed or locked (depending on what actions have been selected) won't get removed or locked again. Generally speaking, this is the desired behavior.",
+                "type": "boolean",
+                "defaultValue": true
+            },
+            "restrictedMods": {
+                "label": "Restricted Mods",
+                "type": "string",
+                "helpText": "A comma-separated list of mods who may not use Comment Mop. Not case sensitive."
+            }
+        }
+    },
+    "triggers": {
+        "onModAction": "/internal/triggers/mod-action"
+    },
+    "permissions": {
+        "reddit": true,
+        "redis": true
     }
 }
