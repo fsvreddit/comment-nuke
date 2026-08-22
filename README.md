@@ -10,6 +10,8 @@ Mopping extremely large chains can fail, if this happens please try again, ensur
 
 This app was originally written by /u/FlyingLaserTurtle, with contributions from /u/ni5arga.
 
+The app icon was designed by u/BravoFive141 - thanks!
+
 For support for Comment Mop, please contact /u/fsv (the current maintainer) rather than either of the above users.
 
 ## Source code and license
@@ -17,6 +19,12 @@ For support for Comment Mop, please contact /u/fsv (the current maintainer) rath
 Comment Mop is open source and licensed under the BSD Three Clause license. [The source code is available on GitHub here](https://github.com/fsvreddit/comment-nuke).
 
 ## Change History
+
+### v9.3.0
+
+* "Success" message now tells you how many comments were locked/removed
+* Add ability to configure a list of mods who may not use Comment Mop, such as for mods during a probationary period
+* Update to latest Dev Platform version
 
 ### v9.2.3
 
