@@ -12,14 +12,16 @@ async function actionAllCommentsInThread (comment: Comment, nukeProps: NukeProps
     const promises: Promise<void>[] = [];
     let actioned = false;
 
-    if (nukeProps.remove && (!nukeProps.skipDistinguished || !comment.isDistinguished()) && (!nukeProps.skipAlreadyActioned || !comment.removed)) {
-        promises.push(comment.remove());
-        actioned = true;
-    }
+    if (comment.body !== "[deleted]" && comment.authorName !== "[deleted]") {
+        if (nukeProps.remove && (!nukeProps.skipDistinguished || !comment.isDistinguished()) && (!nukeProps.skipAlreadyActioned || !comment.removed)) {
+            promises.push(comment.remove());
+            actioned = true;
+        }
 
-    if (nukeProps.lock && (!nukeProps.skipAlreadyActioned || !comment.locked)) {
-        promises.push(comment.lock());
-        actioned = true;
+        if (nukeProps.lock && (!nukeProps.skipAlreadyActioned || !comment.locked)) {
+            promises.push(comment.lock());
+            actioned = true;
+        }
     }
 
     const replies = await comment.replies.all();
